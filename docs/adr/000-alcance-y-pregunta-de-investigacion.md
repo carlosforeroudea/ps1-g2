@@ -22,6 +22,6 @@ Fine-tuning. Entrenamiento desde cero. Idiomas distintos del inglés.
 Resumen multi-documento. Despliegue en nube productiva.
 
 ## Consecuencias
-(+) Resultado válido aunque el ROUGE sea bajo: el hallazgo es el trade-off.
-(+) Costo de cómputo acotado: solo inferencia.
-(−) Exige rigor estadístico (n≥300, tests pareados), no basta una demo.
+(+) Resultado válido aunque el ROUGE sea bajo: el hallazgo es el trade-off.  
+(+) Costo de cómputo acotado: solo inferencia.  
+(−) Exige rigor estadístico (n≥300, tests pareados), no basta una demo.  
