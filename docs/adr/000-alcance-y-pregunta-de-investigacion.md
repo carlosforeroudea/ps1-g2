@@ -1,5 +1,5 @@
 # ADR-000 — Alcance y pregunta de investigación
-Estado: Aceptado | Fecha: 2026-08-12 | Autores: Forero, Martelo, Mercado
+Estado: Aceptado | Fecha: 2026-08-11 | Autores: Forero, Martelo, Mercado
 
 ## Contexto
 El banco de ideas plantea un "resumidor de artículos científicos" con
