@@ -12,14 +12,18 @@ Encuadrar el proyecto como investigación aplicada. Pregunta:
 ¿qué estrategia de manejo de contexto largo maximiza la calidad del
 resumen bajo modelos preentrenados con ventana limitada, y cuál es el
 compromiso calidad/costo operativo?
-Variable independiente: estrategia (truncamiento | map-reduce |
+
+- **Variable independiente:** estrategia (truncamiento | map-reduce |
 extractivo-abstractivo) × modelo (BART | PEGASUS | LongT5/LED).
-Variable dependiente: ROUGE-1/2/Lsum, BERTScore, latencia p50/p95,
+- **Variable dependiente:** ROUGE-1/2/Lsum, BERTScore, latencia p50/p95,
 pico de memoria, ratio de compresión.
 
 ## Fuera de alcance
-Fine-tuning. Entrenamiento desde cero. Idiomas distintos del inglés.
-Resumen multi-documento. Despliegue en nube productiva.
+- Fine-tuning.
+- Entrenamiento desde cero.
+- Idiomas distintos del inglés.
+- Resumen multi-documento.
+- Despliegue en nube productiva.
 
 ## Consecuencias
 (+) Resultado válido aunque el ROUGE sea bajo: el hallazgo es el trade-off.  
