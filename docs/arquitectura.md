@@ -12,14 +12,30 @@ Decisiones de respaldo: [ADR-001](adr/001-despliegue-en-alcance.md),
 
 ## 1. La restricción que define el diseño
 
-Los artículos del corpus promedian **5.905 tokens** (split de test,
-ADR-002). BART y PEGASUS aceptan **1.024**. La brecha es de ~5,8× medida
-por palabras, y mayor en tokens de subpalabra.
+Medido con el tokenizer real de BART sobre 30 artículos del split de
+test (`make smoke`, semana 5):
+
+| | Tokens |
+|---|---|
+| Artículo promedio | **7.839** |
+| Mediana | 7.048 |
+| Rango | 1.446 – 20.745 |
+| Ventana de BART y PEGASUS | **1.024** |
+
+**La brecha es de 7,7×. Ninguno de los 30 artículos cabe completo, y el
+truncamiento descarta ~87 % del artículo promedio.**
+
+Es peor de lo que estimaba el anteproyecto: contar por espacios da 5.905
+tokens (ADR-002), un 33 % menos que el conteo real en subpalabras.
 
 Esa brecha no es un detalle de implementación que se resuelve en una
 función: es el objeto de estudio. Por eso la arquitectura no la esconde
 —la expone como un punto de extensión explícito— y hace que el costo de
-cerrarla sea siempre medible.
+cerrarla sea siempre medible. Ese 87 % es lo que map-reduce y
+extractivo-abstractivo deben recuperar para justificar su costo.
+
+(Muestra de 30 artículos, suficiente para dimensionar el problema. El
+EDA completo sobre los 6.440 del split es tarea de la semana 6.)
 
 Todo lo demás en este documento se deriva de ahí.
 
@@ -55,7 +71,7 @@ Todo lo demás en este documento se deriva de ahí.
 ```
                          ┌─────────────────────────────────┐
    Documento             │   ContextStrategy (orquesta)    │
-   (~5.900 tokens)       │                                 │
+   (~7.800 tokens)       │                                 │
         │                │   fragmenta / selecciona /      │
         ▼                │   trunca, e invoca el modelo    │
    ┌─────────┐           │   1..N veces según su lógica    │
@@ -118,6 +134,11 @@ class SummarizerModel(Protocol):
     def count_tokens(self, text: str) -> int:
         """Tokens reales según el tokenizer de este modelo."""
 
+    def truncate(self, text: str, max_tokens: int) -> str:
+        """Recorta a lo sumo `max_tokens`. Vive aquí y no en las
+        estrategias porque solo el tokenizer sabe dónde caen los
+        límites de token."""
+
     def generate(self, text: str, max_new_tokens: int) -> str:
         """Genera un resumen. `text` DEBE caber en context_window;
         garantizarlo es responsabilidad de la estrategia."""
@@ -126,6 +147,27 @@ class SummarizerModel(Protocol):
 `context_window` y `count_tokens` son la razón de ser del protocolo: sin
 ellos cada estrategia tendría que codificar los límites de cada modelo, y
 añadir LED (16.384 tokens) obligaría a tocar las cuatro estrategias.
+
+`truncate` lo necesitan tres de las cuatro estrategias, no solo
+`Truncation`: `MapReduce` acota cada fragmento y la reducción final,
+y `ExtractiveAbstractive` acota lo que preselecciona. Nótese que **no
+es idempotente**: un ciclo encode/decode normaliza espacios y no
+reproduce el texto original, así que las estrategias solo lo invocan
+cuando `count_tokens` confirma que hace falta.
+
+> **Trampa verificada — de dónde sale `context_window`.**
+> No del tokenizer. `tokenizer.model_max_length` devuelve un centinela
+> de ~1e30 cuando el checkpoint no lo declara en su
+> `tokenizer_config.json`, que es exactamente el caso de
+> `facebook/bart-large-cnn`. El `make smoke` de la semana 5 lo detectó:
+> con ese valor, `Truncation` no truncaría nunca y el proyecto entero
+> mediría un fenómeno que no ocurre.
+>
+> La fuente correcta es la config del modelo:
+> `AutoConfig.from_pretrained(ckpt).max_position_embeddings` → 1024.
+> Los adaptadores de Fase 3 deben leerla de ahí. LongT5 usa atención
+> relativa y no declara el atributo: su límite se fija por
+> configuración explícita, no por introspección.
 
 Implementaciones: BART, PEGASUS (contexto corto, objeto de estudio);
 LED, LongT5 (baseline superior, ADR-003).

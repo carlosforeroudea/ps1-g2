@@ -60,6 +60,10 @@ markers = [
 line-length = 88
 target-version = "py311"
 src = ["src", "tests"]
+# Los bloques de código de docs/ son ilustrativos (firmas de los
+# protocolos del ADR-005), no código ejecutable. Formatearlos rompería
+# la exposición del documento.
+extend-exclude = ["docs"]
 
 [tool.ruff.lint]
 select = [
@@ -69,6 +73,14 @@ select = [
     "B",        # bugbear
     "UP",       # pyupgrade
     "RUF",      # reglas propias de ruff
+]
+ignore = [
+    # El proyecto se documenta y se reporta en español, con tipografía
+    # real: guion largo, raya y signo de multiplicación. No son
+    # homoglifos accidentales.
+    "RUF001",  # carácter ambiguo en literal
+    "RUF002",  # carácter ambiguo en docstring
+    "RUF003",  # carácter ambiguo en comentario
 ]
 
 [tool.ruff.lint.per-file-ignores]

@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Montar el entorno desde el lock
+        # --locked falla si pyproject.toml y uv.lock divergen. Es la
+        # garantía mecánica de la reproducibilidad del ADR-004: nadie
+        # puede añadir una dependencia sin actualizar el lock.
+        run: uv sync --locked
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Formato
+        run: uv run ruff format --check .
+
+      - name: Tests
+        # Se excluyen los tests marcados `network`: CI no descarga pesos
+        # de modelos ni el corpus. Eso es trabajo del `make smoke` local.
+        run: uv run pytest -m "not network"

@@ -15,8 +15,16 @@ estadística que motiva el proyecto hace la evidencia autoconsistente.
 Corpus: `ccdv/arxiv-summarization` (Hugging Face), que es la versión
 publicada del dataset de arXiv de Cohan et al. (2018).
 
-Estructura: `id`, `article` (cuerpo del artículo), `abstract` (resumen
-de referencia). Splits: 203.037 train / 6.436 validation / 6.440 test.
+Estructura: `article` (cuerpo del artículo) y `abstract` (resumen de
+referencia). **No hay campo identificador**: verificado sobre el propio
+dataset, los ejemplos traen solo esos dos campos. El `doc_id` se
+sintetiza por posición en el split (`test-00042`), lo cual es estable
+mientras el dataset no se reordene y es lo que permite auditar qué
+documento produjo cada fila del experimento. Si el corpus cambia de
+versión, los identificadores dejan de ser comparables: por eso el
+`sha` del dataset debe registrarse junto a los resultados.
+
+Splits: 203.037 train / 6.436 validation / 6.440 test.
 
 Configuración: `section`, que preserva la separación por secciones del
 artículo original. No es un detalle cosmético — es la unidad de
@@ -48,10 +56,18 @@ Medidas sobre el propio corpus (tokens por separación de espacios):
 | test       | 5.905           | 174             |
 
 El promedio del split de test (5.905) es **~5,8×** la ventana de 1.024
-tokens de BART y PEGASUS. La brecha es aún mayor que las 4.938
-palabras citadas en el anteproyecto, y el conteo real en tokens de
-subpalabra la ampliará todavía más (un token BPE es menor que una
-palabra). El smoke test del entorno mide esa cifra exacta.
+tokens de BART y PEGASUS, ya por encima de las 4.938 palabras citadas en
+el anteproyecto.
+
+**Medición con el tokenizer real** (BART BPE, 30 artículos del split de
+test, `make smoke` de la semana 5): promedio **7.839** tokens, mediana
+7.048, rango 1.446–20.745. Es un **33 % más** que el conteo por espacios,
+como era de esperar: un token BPE es menor que una palabra.
+
+Resultado: la brecha real es de **7,7×**, **ninguno** de los 30
+artículos cabe completo en la ventana, y el truncamiento descarta
+**~87 %** del artículo promedio. El EDA de la semana 6 extenderá esta
+medición al split completo.
 
 ## Consecuencias
 (+) Resúmenes de referencia disponibles sin trabajo de anotación.

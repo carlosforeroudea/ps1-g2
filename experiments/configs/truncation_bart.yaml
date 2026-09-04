@@ -1,0 +1,35 @@
+# Celda de referencia del factorial: truncamiento × BART.
+#
+# Este archivo es el ejemplo canónico del formato descrito en
+# ADR-005 §4 y docs/arquitectura.md §6. Las otras 5 celdas del
+# factorial, más los baselines del ADR-003, son archivos hermanos.
+#
+# El runner que consume esto es de Fase 3; aquí queda fijado el
+# esquema para que el diseño de la semana 5 sea concreto y no una
+# intención.
+
+id: truncation_bart
+
+model:
+  kind: bart
+  checkpoint: facebook/bart-large-cnn
+  # La ventana la reporta el propio modelo (SummarizerModel.context_window),
+  # no se declara aquí: duplicarla sería una fuente de desincronización.
+
+strategy:
+  kind: truncation
+  max_new_tokens: 256
+
+sample:
+  dataset: ccdv/arxiv-summarization
+  config: section          # ADR-002: preserva límites de sección
+  split: test              # ADR-002: único split en uso, no hay fine-tuning
+  n: 300                   # ADR-000: n>=300 para los tests pareados
+  seed: 20262              # IDÉNTICA en todas las celdas.
+                           # Es lo que hace válido el pareado: si cada celda
+                           # ve una muestra distinta, los tests comparan
+                           # documentos distintos y no estrategias.
+
+metrics:
+  quality: [rouge1, rouge2, rougeLsum, bertscore]
+  cost: [latency_p50, latency_p95, peak_memory_mb, compression_ratio]
