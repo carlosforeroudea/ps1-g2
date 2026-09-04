@@ -1,0 +1,40 @@
+# --- Sistema operativo ---
+.DS_Store
+Thumbs.db
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Entorno virtual (uv lo reconstruye desde uv.lock) ---
+.venv/
+venv/
+
+# NOTA: uv.lock SÍ se versiona. Es lo que garantiza la
+# reproducibilidad exigida por el ADR-000. No lo agregues aquí.
+
+# --- Datos y modelos ---
+# El corpus se descarga desde Hugging Face (ADR-002); no se versiona.
+# Los pesos de los modelos preentrenados tampoco.
+data/*
+!data/.gitkeep
+.cache/
+hf_cache/
+
+# --- Resultados de experimentos ---
+# Las salidas crudas son grandes. Los agregados que sustenten el
+# informe final se versionan explícitamente con `git add -f`.
+experiments/results/*
+!experiments/results/.gitkeep
+
+# --- Editores ---
+.idea/
+.vscode/
+*.swp

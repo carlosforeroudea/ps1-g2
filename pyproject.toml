@@ -1,0 +1,75 @@
+[project]
+name = "resumidor"
+version = "0.1.0"
+description = "Resumen automático de artículos científicos extensos con modelos preentrenados de contexto corto"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+authors = [
+    { name = "Naneth Gisseth Martelo Montoya", email = "naneth.martelo@udea.edu.co" },
+    { name = "Carlos Alberto Forero Agudelo", email = "carlos.forero@udea.edu.co" },
+    { name = "Elio Esteban Mercado Londoño", email = "elio.mercado@udea.edu.co" },
+]
+
+# Las versiones aquí son cotas inferiores; el árbol exacto lo fija
+# uv.lock, que se versiona en Git (ADR-004).
+dependencies = [
+    # Núcleo de inferencia
+    "torch>=2.2",
+    "transformers>=4.40",
+    "datasets>=2.19",
+    "accelerate>=0.30",
+    "sentencepiece>=0.2",       # tokenizers de PEGASUS y LongT5
+    # Métricas de calidad (implementaciones de referencia, ADR-004)
+    "evaluate>=0.4",
+    "rouge-score>=0.1.2",
+    "bert-score>=0.3.13",
+    # Análisis y estadística (tests pareados del ADR-000)
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "scipy>=1.13",
+    "matplotlib>=3.8",
+    # Configuración declarativa de experimentos (ADR-005 §4, RT-6)
+    "pyyaml>=6.0",
+    "pydantic>=2.7",
+    "typer>=0.12",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.2",
+    "ruff>=0.5",
+    "pre-commit>=3.7",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/resumidor"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    # Los tests que descargan modelos o corpus no corren en CI (ADR-004).
+    "network: requiere red; se excluye en CI",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # isort
+    "B",        # bugbear
+    "UP",       # pyupgrade
+    "RUF",      # reglas propias de ruff
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
