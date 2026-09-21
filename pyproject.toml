@@ -19,6 +19,7 @@ dependencies = [
     "datasets>=2.19",
     "accelerate>=0.30",
     "sentencepiece>=0.2",       # tokenizers de PEGASUS y LongT5
+    "protobuf>=4.25",           # lo exige el tokenizer de PEGASUS (falló en el EDA 02)
     # Métricas de calidad (implementaciones de referencia, ADR-004)
     "evaluate>=0.4",
     "rouge-score>=0.1.2",
@@ -60,10 +61,12 @@ markers = [
 line-length = 88
 target-version = "py311"
 src = ["src", "tests"]
-# Los bloques de código de docs/ son ilustrativos (firmas de los
-# protocolos del ADR-005), no código ejecutable. Formatearlos rompería
-# la exposición del documento.
-extend-exclude = ["docs"]
+# docs/: los bloques de código son ilustrativos (firmas de los protocolos
+# del ADR-005), no código ejecutable.
+# notebooks/: análisis exploratorio escrito en Colab por distintos miembros
+# del equipo. Reformatearlos generaría ruido y conflictos sin ganancia; su
+# valor está en el análisis, no en el estilo.
+extend-exclude = ["docs", "notebooks"]
 
 [tool.ruff.lint]
 select = [

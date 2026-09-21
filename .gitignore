@@ -34,6 +34,16 @@ hf_cache/
 experiments/results/*
 !experiments/results/.gitkeep
 
+# --- Credenciales ---
+# El token de HF NO va en el repo: `hf auth login` lo guarda en
+# ~/.cache/huggingface/token. Esto es solo una red de seguridad.
+.env
+.env.*
+!.env.example
+*.pem
+credentials.json
+service-account*.json
+
 # --- Editores ---
 .idea/
 .vscode/

@@ -63,7 +63,16 @@ paper/             Informe final
 
 Fase 2 (semanas 5–6), *Diseño y preparación*.
 
-Hecho: arquitectura, ADRs, entorno reproducible, esqueleto de los
-protocolos con `Truncation` implementada.
-En curso: construcción del corpus y análisis exploratorio (semana 6).
-Sigue: implementación de estrategias y experimentos (Fase 3, semanas 7–14).
+Hecho: arquitectura y ADRs, entorno reproducible, EDA del corpus completo,
+y la infraestructura de ejecución — runner dirigido por YAML, adaptador de
+Hugging Face (BART y PEGASUS), instrumentación de costo y registro de
+resultados por documento.
+
+```bash
+make prueba    # corrida local de 3 documentos con BART
+uv run python -u scripts/run_experiment.py experiments/configs/truncation_pegasus.yaml --limite 3
+```
+
+En curso: muestra experimental estratificada de 300 artículos.
+Sigue: estrategias map-reduce y extractivo-abstractivo, y el factorial
+completo (Fase 3, semanas 7–14).

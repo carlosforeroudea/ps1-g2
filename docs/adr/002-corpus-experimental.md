@@ -26,11 +26,23 @@ versión, los identificadores dejan de ser comparables: por eso el
 
 Splits: 203.037 train / 6.436 validation / 6.440 test.
 
-Configuración: `section`, que preserva la separación por secciones del
-artículo original. No es un detalle cosmético — es la unidad de
-fragmentación semántica que necesitan map-reduce y extractivo-
-abstractivo. Con la config plana habría que reinferir los límites de
-sección con heurísticas frágiles.
+Configuración: `section`. **Corrección (semana 6): no delimita
+secciones**, pese al nombre. Verificado sobre el propio dataset: la config
+`document` entrega el artículo como una sola línea; `section`, como ~220
+líneas que son **oraciones**, sin títulos de sección ni marcadores. Ambas
+tienen los mismos dos campos.
+
+Sigue siendo la configuración correcta, pero la justificación es otra: da
+**fronteras de oración limpias**, que es lo que necesitan la selección
+extractiva y la fragmentación de map-reduce para no cortar a mitad de frase.
+No aporta unidades semánticas de nivel sección.
+
+Consecuencia pendiente: el tipo `Section` de `src/resumidor/domain.py` y la
+fragmentación «por sección» descrita en `docs/arquitectura.md` §4 modelan algo
+que el corpus no tiene. Hay que decidir antes de implementar `MapReduce` si se
+fragmenta por oraciones (lo que el corpus sí ofrece) o si se infieren secciones
+con heurísticas. Mientras tanto el cargador entrega el artículo como una sola
+sección.
 
 Universo de muestreo: **solo el split `test`** (6.440 artículos). No
 se usan train ni validation porque no hay fine-tuning (ADR-000): sin

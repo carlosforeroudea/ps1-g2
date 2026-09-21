@@ -13,12 +13,18 @@ id: truncation_bart
 model:
   kind: bart
   checkpoint: facebook/bart-large-cnn
+  device: auto
+  num_beams: 4
   # La ventana la reporta el propio modelo (SummarizerModel.context_window),
   # no se declara aquí: duplicarla sería una fuente de desincronización.
 
 strategy:
   kind: truncation
-  max_new_tokens: 256
+  # 400 y no 256: el EDA 02 midió que el 27,6 % de los abstracts de referencia
+  # supera los 256 tokens (p99 = 393). Con el techo en 256 se perdería recall
+  # de ROUGE en más de un cuarto del corpus por una razón ajena a la estrategia
+  # de contexto, contaminando la comparación entre celdas.
+  max_new_tokens: 400
 
 sample:
   dataset: ccdv/arxiv-summarization

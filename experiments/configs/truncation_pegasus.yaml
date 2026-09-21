@@ -1,0 +1,36 @@
+# Celda del factorial: truncamiento × PEGASUS.
+#
+# LIMITACIÓN QUE DEBE CONSTAR EN EL INFORME
+# -----------------------------------------
+# Este checkpoint está afinado en arXiv, el dominio real del proyecto, pero
+# `facebook/bart-large-cnn` está afinado en noticias. No existe un BART-arxiv
+# oficial equivalente, así que la pareja del factorial es asimétrica: parte de
+# la diferencia que se observe entre BART y PEGASUS vendrá del dominio de
+# afinado, no de la estrategia de manejo de contexto.
+#
+# Es una decisión consciente del equipo (semana 6). Las conclusiones que
+# comparen modelos entre sí deben declararlo; las que comparen estrategias
+# dentro de un mismo modelo no se ven afectadas.
+
+id: truncation_pegasus
+
+model:
+  kind: pegasus
+  checkpoint: google/pegasus-arxiv
+  device: auto
+  num_beams: 4
+
+strategy:
+  kind: truncation
+  max_new_tokens: 400
+
+sample:
+  dataset: ccdv/arxiv-summarization
+  config: section
+  split: test
+  n: 300
+  seed: 20262
+
+metrics:
+  quality: [rouge1, rouge2, rougeLsum, bertscore]
+  cost: [latency_p50, latency_p95, peak_memory_mb, compression_ratio]

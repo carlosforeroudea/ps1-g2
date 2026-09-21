@@ -1,7 +1,7 @@
 # Resumidor de artículos científicos — Grupo 2, Los Predictores
 # Requiere uv. Instalación y primeros pasos: docs/entorno.md
 
-.PHONY: help setup test lint format smoke hooks clean
+.PHONY: help setup test lint format smoke prueba hooks clean
 
 help:
 	@echo "Targets disponibles:"
@@ -10,6 +10,7 @@ help:
 	@echo "  lint     Lint y verificación de formato"
 	@echo "  format   Aplica el formato"
 	@echo "  smoke    Verifica el entorno y mide la brecha de contexto real"
+	@echo "  prueba   Corrida local de 3 documentos con BART"
 	@echo "  hooks    Instala los hooks de pre-commit"
 	@echo "  clean    Borra cachés de herramientas"
 
@@ -28,7 +29,13 @@ format:
 	uv run ruff check --fix .
 
 smoke:
-	uv run python scripts/smoke.py
+	uv run python -u scripts/smoke.py
+
+# Prueba local pequeña: 3 documentos con BART. `-u` desactiva el búfer de
+# stdout para ver el avance en vivo y no solo al terminar.
+prueba:
+	uv run python -u scripts/run_experiment.py \
+		experiments/configs/truncation_bart.yaml --limite 3
 
 hooks:
 	uv run pre-commit install

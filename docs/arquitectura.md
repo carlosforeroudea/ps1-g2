@@ -199,9 +199,17 @@ decisiones §2 y §3 del ADR-005.
 
 ### `Document`
 
-El artículo con su estructura preservada. La config `section` del corpus
-(ADR-002) da los límites de sección, que `MapReduce` usa como unidad de
-fragmentación semántica en lugar de cortar a ciegas cada 1.024 tokens.
+El artículo con su estructura preservada.
+
+> **Corrección verificada (semana 6).** Se daba por hecho que la config
+> `section` del corpus aportaba límites de sección. **No los aporta**: lo que
+> separa son *oraciones* (ver [ADR-002](adr/002-corpus-experimental.md)). Las
+> fronteras de oración siguen siendo útiles —evitan que `MapReduce` corte a
+> mitad de frase y son la unidad natural de la selección extractiva—, pero
+> `Section` con su `title` modela algo que el corpus no tiene. Antes de
+> implementar `MapReduce` hay que decidir entre fragmentar por oraciones o
+> inferir secciones con heurísticas. Hasta entonces el cargador entrega el
+> artículo como una sola sección.
 
 ```python
 @dataclass(frozen=True)
