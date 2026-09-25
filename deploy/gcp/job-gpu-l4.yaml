@@ -31,8 +31,6 @@ workerPoolSpecs:
 # escribe una fila por documento: una expropiación cuesta un documento, no
 # la corrida entera.
 #
-# El nombre exacto del campo debe verificarse contra la referencia de
-# CustomJobSpec antes de confiar en él:
-#   https://cloud.google.com/vertex-ai/docs/reference/rest/v1/CustomJobSpec
-# scheduling:
-#   strategy: SPOT
+# Campo verificado contra la API (semana 6): se acepta en el esquema.
+scheduling:
+  strategy: SPOT

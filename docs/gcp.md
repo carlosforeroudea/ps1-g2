@@ -208,18 +208,45 @@ la ejecución en GCP» está cumplido.
 
 ## Paso 6 — La corrida real con GPU
 
-Requiere cuota de GPU, que **las cuentas en periodo de prueba no traen**.
-Comprobar antes:
+Requiere cuota de GPU, que **las cuentas nuevas no traen**.
 
-```bash
-gcloud compute regions describe us-central1 \
-    --format="table(quotas.metric,quotas.limit)" | grep -i l4
+> **La cuota de Compute Engine NO es la que aplica.** Vertex AI tiene su
+> propio conjunto de cuotas, separado del de Compute Engine. Mirar
+> `gcloud compute regions describe` lleva a una conclusión equivocada.
+>
+> Las métricas correctas para un Custom Job con L4 son:
+>
+> | Métrica | Para qué |
+> |---|---|
+> | `aiplatform.googleapis.com/custom_model_training_preemptible_nvidia_l4_gpus` | **Spot** — la que usa este proyecto |
+> | `aiplatform.googleapis.com/custom_model_training_nvidia_l4_gpus` | Bajo demanda |
+>
+> (`custom_model_serving_*` es para endpoints de inferencia, no para jobs.)
+
+Consultar y solicitar en la consola, filtrando por servicio *Vertex AI API*:
+
+<https://console.cloud.google.com/iam-admin/quotas?project=udea-509713&service=aiplatform.googleapis.com>
+
+Pedir **1 GPU** en `us-central1`, sobre la métrica *preemptible*. Con una
+basta: el factorial se paraleliza por configuraciones, no dentro de una
+corrida, y pedir más alarga la revisión sin acelerar nada.
+
+**Estado comprobado (semana 6): la cuota está en 0.** Verificado enviando un
+job de prueba, que fue rechazado con HTTP 429 y sin costo:
+
+```
+The following quota metrics exceed quota limits:
+aiplatform.googleapis.com/custom_model_training_preemptible_nvidia_l4_gpus
 ```
 
-Si el límite es 0, hay que solicitarla en *IAM y administración → Cuotas* y
-normalmente convertir la cuenta a una de pago; el crédito restante sigue
-aplicando. La solicitud puede tardar días: conviene lanzarla ya, aunque la
-Fase 3 todavía no la necesite.
+Enviar un job es, de hecho, la forma más rápida y fiable de comprobar la
+cuota: el CLI no expone `effectiveLimit` para estas métricas, y si la cuota
+falta el rechazo es inmediato y gratuito.
+
+La solicitud puede tardar entre horas y varios días, y a veces exige
+convertir la cuenta de prueba en una de pago —el crédito restante sigue
+aplicando—. **Conviene lanzarla cuanto antes**, aunque la Fase 3 todavía no
+la necesite: es el único elemento del proyecto cuyo plazo no controlamos.
 
 Con cuota disponible:
 
