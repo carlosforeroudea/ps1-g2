@@ -65,11 +65,13 @@ class HFSummarizer:
         dispositivo: str | None = None,
         num_beams: int = 4,
         ventana: int | None = None,
+        generacion: dict | None = None,
     ) -> None:
         self._checkpoint = checkpoint
         self._dispositivo = resolver_dispositivo(dispositivo)
         self._num_beams = num_beams
         self._ventana_forzada = ventana
+        self._generacion = dict(generacion or {})
 
     # --- identidad -----------------------------------------------------
     @property
@@ -102,14 +104,22 @@ class HFSummarizer:
         modelo.eval()
         return modelo
 
-    def precargar(self) -> None:
-        """Fuerza la descarga y la carga en memoria.
+    def precargar(self, *, calentar: bool = True) -> None:
+        """Descarga los pesos, los carga en memoria y calienta el cómputo.
 
-        Se invoca antes de empezar a medir: si los pesos se cargaran dentro
-        del primer documento, su latencia incluiría la descarga y esa celda
-        quedaría inflada frente a las demás.
+        El calentamiento no es opcional en la práctica. Cargar los pesos no
+        basta: la **primera** invocación real compila el grafo y reserva los
+        búferes del dispositivo, y ese costo aterriza entero sobre el primer
+        documento medido. Verificado en la semana 6 con PEGASUS en MPS: el
+        primer documento tardó 448,8 s y los siguientes 28,3 y 18,1 s. Sin
+        calentar, la latencia del documento 1 no es comparable con la del
+        resto ni con la de otras celdas.
+
+        La generación de calentamiento se descarta.
         """
         _ = self._tokenizer, self._modelo, self.context_window
+        if calentar:
+            self.generate("warm up the compute graph", max_new_tokens=8)
 
     # --- puerto SummarizerModel ----------------------------------------
     def count_tokens(self, text: str) -> int:
@@ -126,6 +136,22 @@ class HFSummarizer:
         return self._tokenizer.decode(ids, skip_special_tokens=True)
 
     def generate(self, text: str, max_new_tokens: int) -> str:
+        """Genera un resumen bajo la política de generación del experimento.
+
+        Los parámetros de `generacion` **sobrescriben la configuración propia
+        del checkpoint**, y eso es deliberado. Cada checkpoint trae la suya,
+        heredada del corpus en que fue afinado: `facebook/bart-large-cnn`
+        lleva `max_length=142`, `min_length=56` y `length_penalty=2.0`, que
+        son longitudes de noticia. Medido en la semana 6, BART producía 96
+        tokens de media frente a los 209 de los abstracts de referencia,
+        mientras PEGASUS-arxiv producía 205.
+
+        Sin igualar la política, la diferencia de ROUGE entre modelos
+        reflejaría la longitud que cada uno aprendió de su dominio de
+        afinado, no su capacidad de seleccionar contenido — que es lo que el
+        proyecto quiere medir. Igualarla es un control experimental, y debe
+        declararse como tal en el informe.
+        """
         import torch
 
         entradas = self._tokenizer(
@@ -135,11 +161,17 @@ class HFSummarizer:
             return_tensors="pt",
         ).to(self._dispositivo)
 
+        parametros = {
+            "max_new_tokens": max_new_tokens,
+            "num_beams": self._num_beams,
+            # Neutraliza los topes en tokens absolutos del checkpoint, que
+            # conviven con `max_new_tokens` y confunden a `generate`.
+            "max_length": None,
+            "min_length": None,
+            **self._generacion,
+        }
+
         with torch.no_grad():
-            salida = self._modelo.generate(
-                **entradas,
-                max_new_tokens=max_new_tokens,
-                num_beams=self._num_beams,
-            )
+            salida = self._modelo.generate(**entradas, **parametros)
 
         return self._tokenizer.decode(salida[0], skip_special_tokens=True)

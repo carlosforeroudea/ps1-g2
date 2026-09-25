@@ -1,0 +1,23 @@
+.git
+.venv
+.pytest_cache
+.ruff_cache
+__pycache__
+*.pyc
+
+# Los datos no van en la imagen: el corpus se descarga del Hub y los
+# resultados salen del contenedor, no entran.
+#
+# La barra inicial ANCLA el patrón al raíz del contexto. Sin ella, `data/`
+# excluía también `src/resumidor/data/`, y el contenedor moría con
+# `ModuleNotFoundError: No module named 'resumidor.data.corpus'`.
+/data/
+/experiments/results/
+/notebooks/
+/docs/
+/paper/
+/deploy/
+
+.DS_Store
+.env
+.env.*

@@ -40,6 +40,11 @@ dev = [
     "pytest>=8.2",
     "ruff>=0.5",
     "pre-commit>=3.7",
+    # Para ejecutar los notebooks de forma reproducible desde la línea de
+    # comandos (`make evaluar`), no solo a mano en Colab.
+    "jupyter>=1.0",
+    "nbconvert>=7.16",
+    "ipykernel>=6.29",
 ]
 
 [build-system]
@@ -66,7 +71,9 @@ src = ["src", "tests"]
 # notebooks/: análisis exploratorio escrito en Colab por distintos miembros
 # del equipo. Reformatearlos generaría ruido y conflictos sin ganancia; su
 # valor está en el análisis, no en el estilo.
-extend-exclude = ["docs", "notebooks"]
+# Los .ipynb se excluyen estén donde estén: son análisis exploratorio
+# escrito en Colab por distintos miembros del equipo.
+extend-exclude = ["docs", "notebooks", "*.ipynb"]
 
 [tool.ruff.lint]
 select = [

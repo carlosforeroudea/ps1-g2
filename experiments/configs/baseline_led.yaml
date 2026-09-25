@@ -1,0 +1,50 @@
+# Baseline superior de referencia — LED (ADR-003).
+#
+# CHECKPOINT CORREGIDO (semana 6)
+# -------------------------------
+# La primera versión usaba `allenai/led-base-16384`, que es un **modelo base
+# sin afinar para resumen**: LED inicializado desde BART-base con posiciones
+# extendidas, pensado para que cada quien lo afine. Medido sobre 4 documentos
+# dio ROUGE-1 = 0,240 frente a 0,434-0,457 de los demás modelos, y costó 10×
+# más en latencia. Un "techo de calidad" que queda por debajo del suelo no es
+# un baseline: es un modelo sin entrenar para la tarea.
+#
+# Este checkpoint sí está afinado, por los propios autores de LED, sobre el
+# dataset `scientific_papers` — la misma familia que `ccdv/arxiv-summarization`.
+# El split de test sigue siendo ciego para él, así que la comparación es
+# legítima y además es la referencia publicada para esta tarea exacta.
+#
+# Es el mismo error que se evitó en el factorial al descartar
+# `google/pegasus-large` en favor de `google/pegasus-arxiv`.
+
+id: baseline_led
+
+model:
+  kind: led
+  checkpoint: allenai/led-large-16384-arxiv
+  device: auto
+  num_beams: 4
+  generation:
+    # Política idéntica a la del factorial: el control de longitud debe ser
+    # el mismo o la comparación mide calibración en vez de contenido.
+    min_new_tokens: 150
+    length_penalty: 1.0
+    no_repeat_ngram_size: 3
+
+strategy:
+  # Truncamiento a su propia ventana de 16.384 tokens, que cubre completo el
+  # 91,5 % del corpus (EDA 02). No es "sin estrategia": es la misma estrategia
+  # aplicada a una ventana mucho mayor.
+  kind: truncation
+  max_new_tokens: 400
+
+sample:
+  dataset: ccdv/arxiv-summarization
+  config: section
+  split: test
+  n: 300
+  seed: 20262
+
+metrics:
+  quality: [rouge1, rouge2, rougeLsum, bertscore]
+  cost: [latency_p50, latency_p95, peak_memory_mb, compression_ratio]

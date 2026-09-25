@@ -1,0 +1,38 @@
+# Vertex AI Custom Job — paso 2: la corrida real con GPU L4.
+#
+# Requiere cuota de GPU en el proyecto. Las cuentas en periodo de prueba de
+# GCP no la traen: hay que solicitarla y normalmente convertir la cuenta a
+# una de pago (el crédito restante sigue aplicando). Verificar con:
+#   gcloud compute regions describe us-central1 \
+#       --format="value(quotas.filter(metric:NVIDIA_L4_GPUS))"
+#
+# Costo: se paga por segundo de job activo. Una celda completa de 300
+# documentos son del orden de 1-2 horas de L4. Fijar una alerta de
+# presupuesto ANTES de la primera corrida (docs/gcp.md).
+#
+# Sustituye PROYECTO, REGION y BUCKET. Ver docs/gcp.md.
+
+workerPoolSpecs:
+  # El acelerador también va dentro de `machineSpec`.
+  - machineSpec:
+      machineType: g2-standard-8
+      acceleratorType: NVIDIA_L4
+      acceleratorCount: 1
+    replicaCount: 1
+    containerSpec:
+      imageUri: REGION-docker.pkg.dev/PROYECTO/resumidor/runner:latest
+      args:
+        - experiments/configs/truncation_bart.yaml
+        - --salida
+        - /gcs/BUCKET/results/truncation_bart.jsonl
+
+# Spot reduce el costo a aproximadamente un tercio a cambio de que la
+# instancia pueda ser expropiada sin aviso. Es viable aquí porque el runner
+# escribe una fila por documento: una expropiación cuesta un documento, no
+# la corrida entera.
+#
+# El nombre exacto del campo debe verificarse contra la referencia de
+# CustomJobSpec antes de confiar en él:
+#   https://cloud.google.com/vertex-ai/docs/reference/rest/v1/CustomJobSpec
+# scheduling:
+#   strategy: SPOT

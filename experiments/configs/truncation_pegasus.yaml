@@ -19,6 +19,14 @@ model:
   checkpoint: google/pegasus-arxiv
   device: auto
   num_beams: 4
+  generation:
+    # Control experimental: política IDÉNTICA en las cuatro celdas.
+    # Sin ella cada checkpoint escribe con la longitud de su dominio de
+    # afinado (BART daba 96 tokens; PEGASUS-arxiv, 205; la referencia son
+    # 209) y el ROUGE mediría eso en vez de la selección de contenido.
+    min_new_tokens: 150
+    length_penalty: 1.0
+    no_repeat_ngram_size: 3
 
 strategy:
   kind: truncation

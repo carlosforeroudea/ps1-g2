@@ -1,0 +1,25 @@
+# Vertex AI Custom Job — paso 1: demostrar la canalización en CPU.
+#
+# No pide GPU a propósito. La cuota de GPU es el bloqueo conocido de las
+# cuentas nuevas de GCP, y no hace falta para demostrar que el contenedor,
+# Artifact Registry, el job y la escritura de resultados funcionan de punta
+# a punta. Primero la plomería; la GPU después (job-gpu-l4.yaml).
+#
+# Sustituye PROYECTO, REGION y BUCKET antes de usar. Ver docs/gcp.md.
+
+workerPoolSpecs:
+  # `machineType` va dentro de `machineSpec`, no al nivel del worker pool:
+  # de lo contrario la API responde `Unknown name "machineType"`.
+  - machineSpec:
+      machineType: n1-standard-8
+    replicaCount: 1
+    containerSpec:
+      imageUri: REGION-docker.pkg.dev/PROYECTO/resumidor/runner:latest
+      args:
+        - experiments/configs/truncation_bart.yaml
+        - --limite
+        - "2"
+        - --salida
+        # Vertex AI monta los buckets bajo /gcs, así que el resultado sale
+        # del contenedor efímero y queda en Cloud Storage.
+        - /gcs/BUCKET/results/truncation_bart.jsonl

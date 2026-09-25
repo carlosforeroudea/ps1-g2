@@ -1,0 +1,48 @@
+# Control de contexto largo SIN AFINAR — LongT5.
+#
+# CAMBIO DE PAPEL (semana 6)
+# --------------------------
+# Esta configuración se creó como "baseline superior" junto a LED, pero
+# `google/long-t5-tglobal-base` es un **modelo base sin afinar para resumen**:
+# verificado en el Hub, no declara ningún dataset de la tarea.
+#
+# No existe un checkpoint oficial de LongT5 afinado en arXiv. Los que hay en
+# el Hub son de la comunidad y sobre otros dominios (libros, informes de
+# gobierno, simplificación científica), así que ninguno sirve como referencia
+# publicada para este corpus.
+#
+# En lugar de descartarlo, cambia de papel: pasa de **baseline** a **control**.
+# Puesto junto a `allenai/led-large-16384-arxiv` —misma familia de contexto
+# largo, uno afinado y el otro no— permite separar cuánto del rendimiento
+# viene de la arquitectura de contexto largo y cuánto del afinado en la tarea.
+# Esa es una pregunta legítima y el dato ya está medido.
+#
+# NO debe presentarse como techo de calidad ni entrar en la afirmación
+# "la estrategia X recupera el N % del ROUGE del baseline" (ADR-003).
+
+id: control_longt5_sin_afinar
+
+model:
+  kind: longt5
+  checkpoint: google/long-t5-tglobal-base
+  device: auto
+  num_beams: 4
+  generation:
+    min_new_tokens: 150
+    length_penalty: 1.0
+    no_repeat_ngram_size: 3
+
+strategy:
+  kind: truncation
+  max_new_tokens: 400
+
+sample:
+  dataset: ccdv/arxiv-summarization
+  config: section
+  split: test
+  n: 300
+  seed: 20262
+
+metrics:
+  quality: [rouge1, rouge2, rougeLsum, bertscore]
+  cost: [latency_p50, latency_p95, peak_memory_mb, compression_ratio]

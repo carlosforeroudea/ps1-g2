@@ -1,7 +1,7 @@
 # Resumidor de artículos científicos — Grupo 2, Los Predictores
 # Requiere uv. Instalación y primeros pasos: docs/entorno.md
 
-.PHONY: help setup test lint format smoke prueba hooks clean
+.PHONY: help setup test lint format smoke prueba evaluar estado estado-seguir hooks clean
 
 help:
 	@echo "Targets disponibles:"
@@ -11,6 +11,9 @@ help:
 	@echo "  format   Aplica el formato"
 	@echo "  smoke    Verifica el entorno y mide la brecha de contexto real"
 	@echo "  prueba   Corrida local de 3 documentos con BART"
+	@echo "  evaluar  Ejecuta el notebook de evaluación con los resultados"
+	@echo "  estado   Avance de experimentos, build y jobs de GCP"
+	@echo "  estado-seguir  Lo mismo, refrescando cada 20 s"
 	@echo "  hooks    Instala los hooks de pre-commit"
 	@echo "  clean    Borra cachés de herramientas"
 
@@ -36,6 +39,20 @@ smoke:
 prueba:
 	uv run python -u scripts/run_experiment.py \
 		experiments/configs/truncation_bart.yaml --limite 3
+
+# Ejecuta el notebook de evaluación de punta a punta y deja las salidas
+# embebidas. Requiere que existan resultados en experiments/results/.
+evaluar:
+	uv run jupyter nbconvert --to notebook --execute --inplace \
+		--ExecutePreprocessor.timeout=1800 notebooks/evaluacion_modelos.ipynb
+
+# Estado de un vistazo: experimentos, build e infraestructura en GCP.
+estado:
+	@bash scripts/estado.sh
+
+# Lo mismo, refrescando cada 20 s. Ctrl-C para salir.
+estado-seguir:
+	@while true; do clear; bash scripts/estado.sh; sleep 20; done
 
 hooks:
 	uv run pre-commit install

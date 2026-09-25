@@ -19,6 +19,23 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 ESTRATEGIAS_IMPLEMENTADAS = frozenset({"truncation"})
 
 
+class GeneracionConfig(BaseModel):
+    """Política de generación común a todas las celdas.
+
+    Sobrescribe la configuración propia de cada checkpoint. Es un **control
+    experimental**: sin ella, cada modelo escribe con la longitud que aprendió
+    de su dominio de afinado y el ROUGE mide eso en lugar de la capacidad de
+    seleccionar contenido (ver `HFSummarizer.generate`).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    min_new_tokens: int | None = Field(default=None, ge=0, le=1024)
+    length_penalty: float | None = Field(default=None, ge=0.0, le=5.0)
+    no_repeat_ngram_size: int | None = Field(default=None, ge=0, le=10)
+    early_stopping: bool | None = None
+
+
 class ModeloConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -26,6 +43,7 @@ class ModeloConfig(BaseModel):
     checkpoint: str
     device: str = "auto"
     num_beams: int = Field(default=4, ge=1, le=16)
+    generation: GeneracionConfig = Field(default_factory=GeneracionConfig)
 
 
 class EstrategiaConfig(BaseModel):

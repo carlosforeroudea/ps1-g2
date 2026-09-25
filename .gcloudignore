@@ -1,0 +1,37 @@
+# Qué NO sube `gcloud builds submit` como contexto de construcción.
+#
+# Este archivo es obligatorio, no opcional: si no existe, gcloud deriva las
+# reglas de `.gitignore`, donde `data/*` acaba excluyendo también
+# `src/resumidor/data/`. El build entonces termina «bien» y el contenedor
+# muere después con `ModuleNotFoundError: No module named
+# 'resumidor.data.corpus'`, sin pista alguna de la causa.
+#
+# Regla: aquí se excluye por ruta explícita, nunca por nombre suelto.
+
+.git/
+.gitignore
+.venv/
+.pytest_cache/
+.ruff_cache/
+**/__pycache__/
+**/*.pyc
+
+# Datos y resultados: el corpus se descarga del Hub dentro del job.
+#
+# LA BARRA INICIAL ES IMPRESCINDIBLE. En semántica gitignore —que es la que
+# usa gcloud— un patrón sin barra interna coincide con un directorio de ese
+# nombre a CUALQUIER profundidad: `data/` excluía `src/resumidor/data/`.
+# Comprobar siempre con:  gcloud meta list-files-for-upload
+/data/
+/experiments/results/
+
+# Documentación y análisis: no intervienen en la ejecución.
+/docs/
+/notebooks/
+/paper/
+/deploy/
+/tests/
+
+.DS_Store
+.env
+.env.*

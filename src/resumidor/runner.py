@@ -42,6 +42,10 @@ def construir_modelo(config: ExperimentoConfig) -> HFSummarizer:
         config.model.checkpoint,
         dispositivo=config.model.device,
         num_beams=config.model.num_beams,
+        # `exclude_none`: solo se envían los parámetros declarados, para no
+        # imponer valores por defecto nuestros sobre los del checkpoint
+        # cuando la configuración no dice nada.
+        generacion=config.model.generation.model_dump(exclude_none=True),
     )
 
 
@@ -127,8 +131,9 @@ def ejecutar(
     modelo = construir_modelo(config)
     estrategia = construir_estrategia(config)
 
-    # Antes de medir nada: si los pesos se cargaran dentro del primer
-    # documento, su latencia incluiría la descarga y quedaría inflada.
+    # Antes de medir nada: descarga, carga y calentamiento del grafo. Sin
+    # el calentamiento, el primer documento absorbe el costo de compilación
+    # del dispositivo (448,8 s frente a 28,3 s medidos en la semana 6).
     modelo.precargar()
 
     documentos = cargar_muestra(

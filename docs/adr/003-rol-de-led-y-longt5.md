@@ -55,6 +55,53 @@ corto **no** basta, y el proyecto lo habría demostrado con evidencia
 propia en lugar de asumirlo. Es coherente con la consecuencia (+) ya
 registrada en el ADR-000.
 
+## Corrección de la semana 6 — los checkpoints importan tanto como el papel
+
+Este ADR asignaba a LED y LongT5 el papel de baseline superior, pero no
+fijaba **qué checkpoint**. Al implementarlo se eligieron
+`allenai/led-base-16384` y `google/long-t5-tglobal-base`, y ambos son
+**modelos base sin afinar para resumen**: verificado contra el Hub, ninguno
+declara dataset de la tarea.
+
+La medición lo delató de inmediato (4 documentos, política de generación
+idéntica):
+
+| Modelo | ROUGE-1 | Latencia p50 |
+|---|---|---|
+| PEGASUS-arxiv | 0,457 | 113 s |
+| LongT5 base | 0,450 | 79 s |
+| BART-cnn | 0,434 | 25 s |
+| **LED base** | **0,240** | **257 s** |
+
+Un techo de calidad que queda muy por debajo del suelo no es un techo: es un
+modelo que no sabe hacer la tarea. Con esos checkpoints, la afirmación
+central de este ADR —«la estrategia X recupera el N % del ROUGE del
+baseline»— no significaba nada.
+
+Es el mismo error que este proyecto ya había evitado en el factorial al
+descartar `google/pegasus-large` en favor de `google/pegasus-arxiv`. Se
+advirtió para el objeto de estudio y se repitió en la referencia.
+
+### Decisión corregida
+
+**LED → `allenai/led-large-16384-arxiv`.** Afinado por los autores de LED
+sobre `scientific_papers`, la misma familia que nuestro corpus, con el split
+de test ciego. Es la referencia publicada para esta tarea exacta y el
+baseline superior legítimo.
+
+**LongT5 → deja de ser baseline y pasa a ser control.** No existe checkpoint
+oficial afinado en arXiv; los de la comunidad son de otros dominios. Se
+conserva como `control_longt5_sin_afinar` porque, puesto junto a LED-large
+afinado, separa cuánto del rendimiento viene de la arquitectura de contexto
+largo y cuánto del afinado. **No entra en la afirmación del techo de
+calidad.**
+
+### Regla que queda
+
+Todo checkpoint que entre al experimento debe declarar su dataset de afinado
+antes de usarse. Un modelo base y uno afinado no son comparables, y la
+diferencia se confunde con el efecto que el proyecto quiere medir.
+
 ## Consecuencias
 (+) Resuelve la contradicción entre ADR-000 y anteproyecto sin
     invalidar ninguno de los dos.
