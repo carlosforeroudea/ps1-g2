@@ -86,12 +86,22 @@ def bertscore(
 
     from resumidor.device import resolver_dispositivo
 
-    _, _, f1 = bert_score_fn(
-        [preparar_para_lsum(p) for p in predicciones],
-        [preparar_para_lsum(r) for r in referencias],
-        lang="en",
-        model_type=modelo,
-        device=resolver_dispositivo(dispositivo),
-        verbose=False,
-    )
-    return [float(v) for v in f1]
+    preds = [preparar_para_lsum(p) for p in predicciones]
+    refs = [preparar_para_lsum(r) for r in referencias]
+    # Un resumen vacío puntúa 0, como en ROUGE. Además hay que sacarlo del
+    # lote: bert_score lo codifica con `build_inputs_with_special_tokens`,
+    # que transformers 5 ya no expone, y la llamada aborta toda la corrida.
+    validos = [i for i, (p, r) in enumerate(zip(preds, refs)) if p.strip() and r.strip()]
+    f1_por_par = [0.0] * len(preds)
+    if validos:
+        _, _, f1 = bert_score_fn(
+            [preds[i] for i in validos],
+            [refs[i] for i in validos],
+            lang="en",
+            model_type=modelo,
+            device=resolver_dispositivo(dispositivo),
+            verbose=False,
+        )
+        for i, v in zip(validos, f1):
+            f1_por_par[i] = float(v)
+    return f1_por_par
