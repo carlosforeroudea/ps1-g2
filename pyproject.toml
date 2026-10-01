@@ -54,6 +54,15 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/resumidor"]
 
+# Las configuraciones viajan DENTRO del paquete.
+#
+# Las «opciones predefinidas de procesamiento» del objetivo específico 8 son
+# literalmente estos archivos (ADR-005 §4). Empaquetarlos es lo que permite que
+# la plataforma web sirva exactamente la configuración que ganó el experimento,
+# sin copiarlos a otro repositorio donde divergirían en semanas.
+[tool.hatch.build.targets.wheel.force-include]
+"experiments/configs" = "resumidor/_configs"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
