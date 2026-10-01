@@ -1,7 +1,7 @@
 # Resumidor de artículos científicos — Grupo 2, Los Predictores
 # Requiere uv. Instalación y primeros pasos: docs/entorno.md
 
-.PHONY: help setup test lint format smoke prueba evaluar estado estado-seguir hooks clean
+.PHONY: help setup test lint format smoke prueba factorial metricas evaluar estado estado-seguir hooks clean
 
 help:
 	@echo "Targets disponibles:"
@@ -11,6 +11,8 @@ help:
 	@echo "  format   Aplica el formato"
 	@echo "  smoke    Verifica el entorno y mide la brecha de contexto real"
 	@echo "  prueba   Corrida local de 3 documentos con BART"
+	@echo "  factorial  Las 9 configuraciones sobre la muestra de 300 (reanudable)"
+	@echo "  metricas   ROUGE, BERTScore, pruebas pareadas -> experiments/results/analisis/"
 	@echo "  evaluar  Ejecuta el notebook de evaluación con los resultados"
 	@echo "  estado   Avance de experimentos, build y jobs de GCP"
 	@echo "  estado-seguir  Lo mismo, refrescando cada 20 s"
@@ -39,6 +41,20 @@ smoke:
 prueba:
 	uv run python -u scripts/run_experiment.py \
 		experiments/configs/truncation_bart.yaml --limite 3
+
+# Todas las configuraciones, de la más barata a la más cara. Reanuda: si se
+# interrumpe, relanzar continúa donde quedó cada celda. En un portátil son
+# decenas de horas en un M4. `caffeinate -i` evita que el Mac se suspenda.
+CONFIGS_FACTORIAL = lead_k truncation_bart extractive_abstractive_bart \
+	truncation_pegasus extractive_abstractive_pegasus map_reduce_bart \
+	map_reduce_pegasus control_longt5_sin_afinar baseline_led
+
+factorial:
+	PYTORCH_ENABLE_MPS_FALLBACK=1 caffeinate -i uv run python -u scripts/run_experiment.py \
+		$(addprefix experiments/configs/,$(addsuffix .yaml,$(CONFIGS_FACTORIAL)))
+
+metricas:
+	uv run python scripts/evaluar.py
 
 # Ejecuta el notebook de evaluación de punta a punta y deja las salidas
 # embebidas. Requiere que existan resultados en experiments/results/.

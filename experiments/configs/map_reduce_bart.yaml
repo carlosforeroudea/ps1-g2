@@ -1,0 +1,40 @@
+# Celda del factorial: map-reduce × BART.
+#
+# Cubre el artículo completo a costa de N+1 invocaciones (N ≈ 8 con artículos
+# de ~7.800 tokens y ventana de 1.024). La política de generación común rige
+# solo la reducción final; en la fase map cada fragmento recibe
+# ventana // N tokens, acotados a [map_min_new_tokens, map_max_new_tokens],
+# para que la reducción quepa sin truncar. Ver strategies/map_reduce.py.
+
+id: map_reduce_bart
+
+model:
+  kind: bart
+  checkpoint: facebook/bart-large-cnn
+  device: auto
+  num_beams: 4
+  generation:
+    # Política IDÉNTICA a las demás celdas (ver truncation_bart.yaml).
+    min_new_tokens: 150
+    length_penalty: 1.0
+    no_repeat_ngram_size: 3
+
+strategy:
+  kind: map_reduce
+  max_new_tokens: 400      # reducción final: mismo techo que las demás celdas
+  map_max_new_tokens: 160
+  map_min_new_tokens: 48
+  max_niveles: 3
+
+sample:
+  dataset: ccdv/arxiv-summarization
+  config: section
+  split: test
+  n: 300
+  seed: 20262
+  muestreo: estratificado
+  estratos: 4
+
+metrics:
+  quality: [rouge1, rouge2, rougeLsum, bertscore]
+  cost: [latency_p50, latency_p95, peak_memory_mb, compression_ratio]

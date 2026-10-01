@@ -43,6 +43,8 @@ sample:
                            # Es lo que hace válido el pareado: si cada celda
                            # ve una muestra distinta, los tests comparan
                            # documentos distintos y no estrategias.
+  muestreo: estratificado  # cuartiles de longitud, 75 por estrato (notebook 03),
+  estratos: 4              # pero sobre test: los checkpoints -arxiv vieron train.
 
 metrics:
   quality: [rouge1, rouge2, rougeLsum, bertscore]

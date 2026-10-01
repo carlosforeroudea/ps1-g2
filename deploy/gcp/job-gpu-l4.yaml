@@ -10,7 +10,8 @@
 # documentos son del orden de 1-2 horas de L4. Fijar una alerta de
 # presupuesto ANTES de la primera corrida (docs/gcp.md).
 #
-# Sustituye PROYECTO, REGION y BUCKET. Ver docs/gcp.md.
+# Sustituye PROYECTO, REGION, BUCKET y CONFIG (p. ej. map_reduce_pegasus): un
+# job por configuración. Ver docs/gcp.md y scripts/lanzar_gcp.sh.
 
 workerPoolSpecs:
   # El acelerador también va dentro de `machineSpec`.
@@ -22,9 +23,11 @@ workerPoolSpecs:
     containerSpec:
       imageUri: REGION-docker.pkg.dev/PROYECTO/resumidor/runner:latest
       args:
-        - experiments/configs/truncation_bart.yaml
+        - experiments/configs/CONFIG.yaml
         - --salida
-        - /gcs/BUCKET/results/truncation_bart.jsonl
+        # Reanuda sobre el mismo objeto: una expropiación spot se recupera
+        # relanzando el job, sin repetir los documentos ya escritos.
+        - /gcs/BUCKET/results/CONFIG.jsonl
 
 # Spot reduce el costo a aproximadamente un tercio a cambio de que la
 # instancia pueda ser expropiada sin aviso. Es viable aquí porque el runner

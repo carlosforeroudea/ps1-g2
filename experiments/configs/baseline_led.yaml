@@ -44,6 +44,8 @@ sample:
   split: test
   n: 300
   seed: 20262
+  muestreo: estratificado  # cuartiles de longitud, 75 por estrato (notebook 03),
+  estratos: 4              # pero sobre test: los checkpoints -arxiv vieron train.
 
 metrics:
   quality: [rouge1, rouge2, rougeLsum, bertscore]

@@ -61,14 +61,20 @@ def calificar(df: pd.DataFrame, *, con_bertscore: bool = True) -> pd.DataFrame:
     return df
 
 
-def resumir_por_configuracion(df: pd.DataFrame) -> pd.DataFrame:
+def resumir_por_configuracion(
+    df: pd.DataFrame, *, por: tuple[str, ...] = ()
+) -> pd.DataFrame:
     """Tabla calidad/costo, una fila por configuración.
 
     La latencia se reporta como **p50 y p95**, no como media: el objetivo
     específico 5 los pide así, y la media es engañosa en una distribución con
     cola larga como la de estos documentos.
+
+    `por=("estrato",)` desglosa además por estrato de longitud: es donde se ve
+    si una estrategia solo gana en los artículos largos.
     """
     calidad = [c for c in COLUMNAS_CALIDAD if c in df.columns]
+    claves = ["config_id", "modelo", "estrategia", *por]
 
     agregados: dict = {c: "mean" for c in calidad}
     agregados["pico_memoria_mb"] = "max"
@@ -77,8 +83,8 @@ def resumir_por_configuracion(df: pd.DataFrame) -> pd.DataFrame:
     agregados["invocaciones_modelo"] = "mean"
     agregados["doc_id"] = "count"
 
-    tabla = df.groupby(["config_id", "modelo", "estrategia"]).agg(agregados)
-    latencias = df.groupby(["config_id", "modelo", "estrategia"])["latencia_s"]
+    tabla = df.groupby(claves).agg(agregados)
+    latencias = df.groupby(claves)["latencia_s"]
     tabla["latencia_p50"] = latencias.quantile(0.50)
     tabla["latencia_p95"] = latencias.quantile(0.95)
 

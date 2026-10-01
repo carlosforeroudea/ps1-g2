@@ -58,6 +58,24 @@ versionada en la configuración del experimento. La misma muestra para
 todas las celdas del factorial — es lo que habilita los tests pareados
 que exige el ADR-000.
 
+**Corrección (semana 7): muestreo estratificado sobre test.** La muestra de
+300 pasa a ser estratificada por cuartiles de longitud del artículo en
+palabras, con 75 artículos por estrato: el criterio del notebook 03. Sin
+estratificar, una muestra aleatoria de 300 puede dejar la cola de artículos
+largos —donde el truncamiento pierde más— con muy pocos casos para concluir
+algo sobre ella.
+
+El notebook 03 aplicó ese criterio sobre **train**, y esa muestra no puede
+usarse: `google/pegasus-arxiv` y `allenai/led-large-16384-arxiv` están
+afinados sobre el train de este mismo corpus, así que evaluarlos allí
+inflaría su ROUGE y sesgaría toda comparación contra BART. El criterio se
+conserva y el universo pasa a ser test (`resumidor.data.corpus.indices_estratificados`).
+
+Cuartiles de test, en palabras: Q1 ≤ 3.404 < Q2 ≤ 5.017 < Q3 ≤ 7.436 < Q4
+(máximo de la muestra: 35.708). Con estratificado, el `doc_id` es el índice
+real del artículo en el split (`test-05403`), y cada fila de resultados lleva
+su `estrato`.
+
 ## Estadísticas que justifican el problema
 Medidas sobre el propio corpus (tokens por separación de espacios):
 

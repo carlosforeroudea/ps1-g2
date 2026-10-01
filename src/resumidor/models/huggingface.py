@@ -104,7 +104,7 @@ class HFSummarizer:
         modelo.eval()
         return modelo
 
-    def precargar(self, *, calentar: bool = True) -> None:
+    def precargar(self, *, calentar: bool = True, pesos: bool = True) -> None:
         """Descarga los pesos, los carga en memoria y calienta el cómputo.
 
         El calentamiento no es opcional en la práctica. Cargar los pesos no
@@ -116,8 +116,15 @@ class HFSummarizer:
         resto ni con la de otras celdas.
 
         La generación de calentamiento se descarta.
+
+        Con `pesos=False` solo carga el tokenizer: es lo que necesita `LeadK`,
+        que no genera pero cuenta tokens con el mismo tokenizer que las celdas
+        de BART para que `tokens_entrada` sea comparable.
         """
-        _ = self._tokenizer, self._modelo, self.context_window
+        _ = self._tokenizer, self.context_window
+        if not pesos:
+            return
+        _ = self._modelo
         if calentar:
             self.generate("warm up the compute graph", max_new_tokens=8)
 
@@ -135,7 +142,9 @@ class HFSummarizer:
         ids = self._tokenizer(text, truncation=True, max_length=max_tokens)["input_ids"]
         return self._tokenizer.decode(ids, skip_special_tokens=True)
 
-    def generate(self, text: str, max_new_tokens: int) -> str:
+    def generate(
+        self, text: str, max_new_tokens: int, min_new_tokens: int | None = None
+    ) -> str:
         """Genera un resumen bajo la política de generación del experimento.
 
         Los parámetros de `generacion` **sobrescriben la configuración propia
@@ -151,6 +160,11 @@ class HFSummarizer:
         afinado, no su capacidad de seleccionar contenido — que es lo que el
         proyecto quiere medir. Igualarla es un control experimental, y debe
         declararse como tal en el informe.
+
+        `min_new_tokens` sobrescribe el mínimo de la política solo en esta
+        invocación (fase map de `MapReduce`). En cualquier caso el mínimo se
+        acota a `max_new_tokens`: un mínimo mayor que el máximo no es un
+        error de `generate`, pero produce salidas cortadas a mitad de frase.
         """
         import torch
 
@@ -170,6 +184,10 @@ class HFSummarizer:
             "min_length": None,
             **self._generacion,
         }
+        if min_new_tokens is not None:
+            parametros["min_new_tokens"] = min_new_tokens
+        if parametros.get("min_new_tokens", 0) > max_new_tokens:
+            parametros["min_new_tokens"] = max_new_tokens
 
         with torch.no_grad():
             salida = self._modelo.generate(**entradas, **parametros)

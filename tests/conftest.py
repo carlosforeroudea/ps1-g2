@@ -34,8 +34,13 @@ class FakeModel:
     def truncate(self, text: str, max_tokens: int) -> str:
         return " ".join(text.split()[:max_tokens])
 
-    def generate(self, text: str, max_new_tokens: int) -> str:
+    min_tokens_pedidos: list[int | None] = field(default_factory=list)
+
+    def generate(
+        self, text: str, max_new_tokens: int, min_new_tokens: int | None = None
+    ) -> str:
         self.calls.append(text)
+        self.min_tokens_pedidos.append(min_new_tokens)
         return " ".join(text.split()[:max_new_tokens]).upper()
 
 

@@ -37,6 +37,10 @@ class ContadorDeInvocaciones:
     def truncate(self, text: str, max_tokens: int) -> str:
         return self._modelo.truncate(text, max_tokens)
 
-    def generate(self, text: str, max_new_tokens: int) -> str:
+    def generate(
+        self, text: str, max_new_tokens: int, min_new_tokens: int | None = None
+    ) -> str:
         self.invocaciones += 1
-        return self._modelo.generate(text, max_new_tokens=max_new_tokens)
+        return self._modelo.generate(
+            text, max_new_tokens=max_new_tokens, min_new_tokens=min_new_tokens
+        )

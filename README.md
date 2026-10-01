@@ -61,18 +61,28 @@ paper/             Informe final
 
 ## Estado
 
-Fase 2 (semanas 5–6), *Diseño y preparación*.
+Fase 3, *Experimentación*.
 
-Hecho: arquitectura y ADRs, entorno reproducible, EDA del corpus completo,
-y la infraestructura de ejecución — runner dirigido por YAML, adaptador de
-Hugging Face (BART y PEGASUS), instrumentación de costo y registro de
-resultados por documento.
+Implementadas las cuatro estrategias del ADR-005 —`Truncation`, `MapReduce`,
+`ExtractiveAbstractive` y `LeadK`— y las 9 configuraciones del diseño: el
+factorial 3 estrategias × {BART, PEGASUS}, el techo LED, el control LongT5 y
+el piso `lead_k`. Todas sobre la misma muestra estratificada de 300 artículos
+del split de test (75 por cuartil de longitud, ADR-002).
 
 ```bash
-make prueba    # corrida local de 3 documentos con BART
-uv run python -u scripts/run_experiment.py experiments/configs/truncation_pegasus.yaml --limite 3
+make prueba      # 3 documentos con BART, para verificar el entorno
+make factorial   # las 9 configuraciones × 300 documentos (reanudable)
+make metricas    # ROUGE, BERTScore, pruebas pareadas → experiments/results/analisis/
 ```
 
-En curso: muestra experimental estratificada de 300 artículos.
-Sigue: estrategias map-reduce y extractivo-abstractivo, y el factorial
-completo (Fase 3, semanas 7–14).
+Para ejecutarlo en local (Mac con Apple Silicon, sin GPU dedicada: usa MPS),
+[notebooks/04_ejecucion_factorial.ipynb](notebooks/04_ejecucion_factorial.ipynb)
+corre todo, muestra el avance con tiempo restante estimado y genera las
+métricas al final. En un M4 el factorial completo son del orden de 30–40 horas
+(map-reduce hace ~9 invocaciones por artículo); se puede repartir en varias
+sesiones. Necesita ~8 GB libres para los modelos.
+
+Alternativa en la nube: `bash scripts/lanzar_gcp.sh map_reduce_bart ...`, un
+job L4 spot por configuración ([docs/gcp.md](docs/gcp.md)).
+
+Las corridas son reanudables: relanzar una configuración continúa donde quedó.

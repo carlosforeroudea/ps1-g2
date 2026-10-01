@@ -35,6 +35,10 @@ class Document:
     reference_summary: str | None = None
     """El abstract, cuando el documento viene del corpus. La plataforma
     web no tiene referencia: por eso es opcional."""
+    estrato: str | None = None
+    """Estrato de longitud de la muestra experimental (`Q1`..`Q4`). Permite
+    ver si una estrategia gana solo en artículos largos, que es donde el
+    truncamiento más pierde."""
 
     @property
     def text(self) -> str:

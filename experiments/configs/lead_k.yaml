@@ -1,0 +1,31 @@
+# Piso trivial (ADR-003): las primeras k oraciones, sin modelo generativo.
+#
+# El modelo declarado solo aporta el TOKENIZER: `tokens_entrada` y
+# `tokens_salida` se cuentan igual que en las celdas de BART. El runner no
+# carga los pesos (0 invocaciones).
+#
+# k = 6: mediana de oraciones de los abstracts del split de test (media 5,7).
+
+id: lead_k
+
+model:
+  kind: bart
+  checkpoint: facebook/bart-large-cnn
+  device: cpu
+
+strategy:
+  kind: lead_k
+  k: 6
+
+sample:
+  dataset: ccdv/arxiv-summarization
+  config: section
+  split: test
+  n: 300
+  seed: 20262
+  muestreo: estratificado
+  estratos: 4
+
+metrics:
+  quality: [rouge1, rouge2, rougeLsum, bertscore]
+  cost: [latency_p50, latency_p95, peak_memory_mb, compression_ratio]

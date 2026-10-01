@@ -1,0 +1,37 @@
+# Celda del factorial: extractivo-abstractivo × BART.
+#
+# TextRank (TF-IDF, sin modelo generativo) elige las oraciones más centrales
+# hasta llenar la ventana; se devuelven en su orden original y el modelo
+# genera una sola vez. Costo cercano al de truncamiento, con entrada tomada
+# de todo el artículo. Ver strategies/extractive_abstractive.py.
+
+id: extractive_abstractive_bart
+
+model:
+  kind: bart
+  checkpoint: facebook/bart-large-cnn
+  device: auto
+  num_beams: 4
+  generation:
+    # Política IDÉNTICA a las demás celdas (ver truncation_bart.yaml).
+    min_new_tokens: 150
+    length_penalty: 1.0
+    no_repeat_ngram_size: 3
+
+strategy:
+  kind: extractive_abstractive
+  max_new_tokens: 400
+  min_palabras: 5
+
+sample:
+  dataset: ccdv/arxiv-summarization
+  config: section
+  split: test
+  n: 300
+  seed: 20262
+  muestreo: estratificado
+  estratos: 4
+
+metrics:
+  quality: [rouge1, rouge2, rougeLsum, bertscore]
+  cost: [latency_p50, latency_p95, peak_memory_mb, compression_ratio]

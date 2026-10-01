@@ -53,13 +53,32 @@ def test_las_configuraciones_del_repo_son_validas() -> None:
 
 
 def test_rechaza_estrategia_no_implementada(tmp_path: pathlib.Path) -> None:
-    """map_reduce está diseñada pero no implementada: debe fallar ya.
-
-    Sin esto, una corrida de 300 documentos arrancaría y moriría tarde.
-    """
-    ruta = _escribir(tmp_path, _variante(strategy__kind="map_reduce"))
+    """Sin esto, una corrida de 300 documentos arrancaría y moriría tarde."""
+    ruta = _escribir(tmp_path, _variante(strategy__kind="resumen_magico"))
     with pytest.raises(ValidationError, match="todavía no implementada"):
         cargar_config(ruta)
+
+
+@pytest.mark.parametrize(
+    "kind", ["truncation", "map_reduce", "extractive_abstractive", "lead_k"]
+)
+def test_acepta_las_cuatro_estrategias(tmp_path: pathlib.Path, kind: str) -> None:
+    ruta = _escribir(tmp_path, _variante(strategy__kind=kind))
+    assert cargar_config(ruta).strategy.kind == kind
+
+
+def test_rechaza_parametro_de_estrategia_mal_escrito(tmp_path: pathlib.Path) -> None:
+    # Ignorarlo haría correr la celda con el valor por defecto sin avisar.
+    datos = _variante(strategy__kind="map_reduce")
+    datos["strategy"]["map_max_new_token"] = 100
+    with pytest.raises(ValidationError, match="desconocidos"):
+        cargar_config(_escribir(tmp_path, datos))
+
+
+def test_muestra_estratificada_exige_estratos_iguales(tmp_path: pathlib.Path) -> None:
+    datos = _variante(sample__muestreo="estratificado", sample__n=301)
+    with pytest.raises(ValidationError, match="estratos iguales"):
+        cargar_config(_escribir(tmp_path, datos))
 
 
 def test_rechaza_campo_desconocido_en_el_modelo(tmp_path: pathlib.Path) -> None:

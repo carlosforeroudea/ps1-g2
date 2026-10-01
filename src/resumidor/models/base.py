@@ -57,12 +57,20 @@ class SummarizerModel(Protocol):
         """
         ...
 
-    def generate(self, text: str, max_new_tokens: int) -> str:
+    def generate(
+        self, text: str, max_new_tokens: int, min_new_tokens: int | None = None
+    ) -> str:
         """Genera un resumen de `text`.
 
         `text` DEBE caber en `context_window`; garantizarlo es
         responsabilidad de la estrategia que invoca. El modelo no
         recorta por su cuenta: hacerlo silenciosamente ocultaría
         pérdida de información justo en el fenómeno bajo estudio.
+
+        `min_new_tokens`, si se da, sobrescribe el mínimo de la política de
+        generación del experimento. Lo necesita `MapReduce`: la política
+        común exige 150 tokens por resumen, y aplicada a cada uno de los ~8
+        fragmentos de un artículo produce una reducción que ya no cabe en
+        la ventana.
         """
         ...
